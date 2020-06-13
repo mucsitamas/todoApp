@@ -1,19 +1,20 @@
 {
-  "posts": [
+  "tasks": [
     {
       "id": 1,
-      "title": "json-server",
-      "author": "typicode"
-    }
-  ],
-  "comments": [
+      "name": "Learn Vue.js"
+    },
     {
-      "id": 1,
-      "body": "some comment",
-      "postId": 1
+      "id": 2,
+      "name": "Stretch"
+    },
+    {
+      "id": 3,
+      "name": "Play WOW"
+    },
+    {
+      "name": "Learn Japanese",
+      "id": 5
     }
-  ],
-  "profile": {
-    "name": "typicode"
-  }
+  ]
 }

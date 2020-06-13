@@ -46,6 +46,43 @@
 			text-align: center;
 			display: table-cell;
 		}
+		#snackbar {
+			visibility: hidden;
+			min-width: 250px;
+			margin-left: -125px;
+			background-color: #333;
+			color: #fff;
+			text-align: center;
+			border-radius: 2px;
+			padding: 16px;
+			position: fixed;
+			left: 50%;
+			bottom: 30px;
+		}
+		#snackbar.show {
+			visibility: visible;
+			animation: fadein 0.5s, fadeout 0.5s 2.5s;
+		}
+		@keyframes fadein {
+			from {
+				bottom: 0;
+				opacity: 0;
+			}
+			to {
+				bottom: 30px;
+				opacity: 1;
+			}
+		}
+		@keyframes fadeout {
+			from {
+				bottom: 30px;
+				opacity: 1;
+			}
+			to {
+				bottom: 0;
+				opacity: 0;
+			}
+		}
 	</style>
 </head>
 
@@ -55,10 +92,11 @@
 		<button @click="addTask()">Add</button>
 		<div id="tasks">
 			<div v-for="(task, index) in tasks" v-bind:class="{ active : isActive(index), task: true}">
-				<div class="title" @click="select(index)">{{ task }}</div>
-				<div class="context" @click="removeTask(index)"><i class="fas fa-trash-alt"></i></div>
+				<div class="title" @click="select(index)">{{ task.name }}</div>
+				<div class="context" @click="removeTask(index, task.id)"><i class="fas fa-trash-alt"></i></div>
 			</div>
 		</div>
+		<div id="snackbar" v-bind:class="{ show : message != null }">{{ message }}</div>
 	</div>
 	<script>
 		new Vue({
@@ -66,13 +104,23 @@
 			data: {
 				selected: -1,
 				taskName: '',
-				tasks: [
-					'Learn Vue.js',
-					'Stretch',
-					'Play WOW'
-				],
+				tasks: [],
+				message: null
+			},
+			created: function () {
+				this.$http.get("/tasks/").then(function (response) {
+					this.tasks = response.data;
+				});
+				this.$on('message', this.showMessage);
 			},
 			methods: {
+				showMessage: function(message) {
+					var vm = this;
+					vm.message = message;
+					setTimeout(function() {
+						vm.message = null;
+					}, 3000)
+				},
 				select: function (index) {
 					if (this.isActive(index)) {
 						this.selected = -1;
@@ -82,16 +130,28 @@
 				},
 				addTask: function () {
 					if (this.taskName !== '') {
-						this.tasks.push(this.taskName);
-						this.taskName = '';
+						var task = {
+							name: this.taskName,
+						};
+						this.$http.post("/tasks/", task).then(function (response) {
+							this.tasks.push(response.data);
+							this.taskName = '';
+							this.$emit('message', 'Created!');
+						}).catch(this.httpError);
 					}
 				},
 				isActive: function (index) {
 					return this.selected === index;
 				},
-				removeTask: function (index) {
-					this.tasks.splice(index, 1);
-					this.selected = -1;
+				removeTask: function (index, id) {
+					this.$http.delete("/tasks/" + id).then(function () {
+						this.tasks.splice(index, 1);
+						this.selected = -1;
+						this.$emit('message', 'Deleted!');
+					}).catch(this.httpError);
+				},
+				httpError: function() {
+					this.$emit('message', 'Error during the request!');
 				}
 			}
 		});
